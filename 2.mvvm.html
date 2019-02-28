@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>mvvm2</title>
+</head>
+<body>
+    <div id="app">
+        <input type="text" zf-model="msg">
+        <input type="text" zf-model="name">
+        {{msg}} {{name}}
+        <div>zfpx</div>
+        <div>{{name}}</div>
+    </div>
+    <script>
+    // 将数据和节点挂载在一起
+    function compile(el) {
+        let ele = document.querySelector(el);
+        // 我们不要直接操作节点，可能会导致页面的回流
+        // 文档碎片 nodeList:类数组，Array.prototype.slice.call()
+        let fragement = document.createDocumentFragment();
+        
+        // 取出ele下的第一个元素，直到取完为止，并将并且将内容放到文档碎片中
+        let child;
+        while(child = ele.firstChild) {
+            fragement.appendChild(child);
+        }
+        Array.from(fragement.childNodes).forEach(node=>{
+            console.log(node);
+            // 判读node节点是标签还是文本
+            if (node.nodeType === 1){// 元素节点
+            // 取到节点上的所有属性nodeList
+            // console.log(node.attributes);
+                Array.from(node.attributes).forEach(attr=>{
+                    console.dir(attr);
+                });
+            }
+            if (node.nodeType === 3) {// 文本节点
+
+            }
+        });
+
+        ele.appendChild(fragement);
+    }
+    compile('#app');
+    </script>
+</body>
+</html>
