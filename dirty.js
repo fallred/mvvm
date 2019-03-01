@@ -8,9 +8,13 @@ function Scope () {
 Scope.prototype.$digest = function () {
     // 至少执行一次
     var dirty = true; // 默认我认为只要调用了$digest方法，就应该去查一次
+    var count = 9;
     do {
         dirty = this.$digestOne();
-    } while (dirty);
+        if (count === 0) {// 已经查了10次
+            throw new Error(' 10 $digest() interations reached,Aborting!');
+        }
+    } while (dirty&&count--);
 }
 Scope.prototype.$digestOne = function () {
     let dirty = false;
@@ -41,6 +45,7 @@ scope.name = '珠峰';
 scope.age = 9;
 scope.$watch('name', function(newVal, oldVal){
     console.log(newVal, oldVal);
+    scope.name=Math.random();
 });
 
 scope.$watch('age', function(newVal, oldVal){
