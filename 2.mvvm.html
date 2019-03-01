@@ -15,34 +15,95 @@
         <div>{{name}}</div>
     </div>
     <script>
+    function ViewModel(data){
+        this.data= data;
+        this.nodes = [];
+    }
+    ViewModel.prototype.bindNode = function(node){
+        this.nodes.push(node);
+        console.log(this.nodes);
+    }
+    ViewModel.prototype.setVal = function(newVal){
+        // 如果设置的值和老值相同
+        if (newVal !== this.data) {
+            this.data = newVal;
+            this.update();
+        }
+    }
+    ViewModel.prototype.getVal = function(){
+        return this.data;
+    }
+    ViewModel.prototype.update = function () {// 更新方法
+        this.nodes.forEach(node=>{
+            if(node.nodeType === 1){
+                node.value = this.data;
+            } else {
+                node.textContent= node.my.replace(/\{\{([^}]*)\}\}/g, function(){
+                    return obj[arguments[1]].data
+                });
+            }
+        });
+    }
+
     // 将数据和节点挂载在一起
+    // let obj = {msg: {value: '欢迎', nodes: []}, name: ''};
+    let obj = {msg: new ViewModel('欢迎你'), name: new ViewModel('姜文')};
+    
     function compile(el) {
         let ele = document.querySelector(el);
         // 我们不要直接操作节点，可能会导致页面的回流
         // 文档碎片 nodeList:类数组，Array.prototype.slice.call()
-        let fragement = document.createDocumentFragment();
+        let fragment = document.createDocumentFragment();
         
         // 取出ele下的第一个元素，直到取完为止，并将并且将内容放到文档碎片中
         let child;
         while(child = ele.firstChild) {
-            fragement.appendChild(child);
+            fragment.appendChild(child);
         }
-        Array.from(fragement.childNodes).forEach(node=>{
-            console.log(node);
-            // 判读node节点是标签还是文本
-            if (node.nodeType === 1){// 元素节点
-            // 取到节点上的所有属性nodeList
-            // console.log(node.attributes);
-                Array.from(node.attributes).forEach(attr=>{
-                    console.dir(attr);
-                });
-            }
-            if (node.nodeType === 3) {// 文本节点
+        
 
-            }
+        function replace (fragment) {
+            Array.from(fragment.childNodes).forEach(node=>{
+                // console.log(node);
+                // 判读node节点是标签还是文本
+                if (node.nodeType === 1){// 元素节点
+                // 取到节点上的所有属性nodeList
+                // console.log(node.attributes);
+                    Array.from(node.attributes).forEach(attr=>{
+                        // console.dir(attr);
+                        let  {name, value} = attr;
+                        if (name.includes('zf-')) {
+                            // console.log(node);
+                            obj[value].bindNode(node);
+                            node.addEventListener('input', function(){
+                                obj[value].setVal(e.target.value);
+                            });
+                        } 
+                    });
+                }
+                let reg = /\{\{([^}]*)\}\}/g;// 判断当前有没有{{}}的元素
+                let text = node.textContent;
+                if (node.nodeType === 3 && reg.test(text)) {// 文本节点
+                    // console.dir(node);
+                    // node.textContent
+                    // 自定义属性，保留原有的内容
+                    node.my = text;
+                    text.replace(reg, function () {
+                        obj[arguments[1]].bindNode(node);
+                    });
+                }
+                if (node.childNodes.length) {
+                    // 如果有嵌套关系继续查找
+                    replace(node);
+                }
+            });
+        }
+        
+        replace(fragment);// 编译后要调用update方法
+        Object.keys(obj).forEach(key => {
+            obj[key].update();
         });
-
-        ele.appendChild(fragement);
+        ele.appendChild(fragment);
     }
     compile('#app');
     </script>
