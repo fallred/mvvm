@@ -6,10 +6,24 @@ function Scope () {
     this.$$watchers = [];
 }
 Scope.prototype.$digest = function () {
-
+    // 至少执行一次
+    var dirty = true; // 默认我认为只要调用了$digest方法，就应该去查一次
+    do {
+        dirty = this.$digestOne();
+    } while (dirty);
 }
 Scope.prototype.$digestOne = function () {
-    
+    let dirty = false;
+    this.$$watchers.forEach(watcher=>{
+        let oldVal = watcher.last;// 老值
+        let newVal = this[watcher.exp];
+        if(newVal !== oldVal){//更新了
+            watcher.fn(newVal, oldVal);// 调用了fn可能就会更改数据，更改数据就应该再查一遍
+            dirty = true;
+            watcher.last = newVal;//更新老值，让老的值变成最新更改的值，方便下次更新
+        }
+    });
+    return dirty;
 }
 Scope.prototype.$watch = function (exp, fn) {
     // $watch中应该有保留的内容函数，还有当前的老值，保留一个表达式
@@ -20,14 +34,7 @@ Scope.prototype.$watch = function (exp, fn) {
     });
 }
 Scope.prototype.$apply = function () {
-    this.$$watchers.forEach(watcher=>{
-        let oldVal = watcher.last;// 老值
-        let newVal = this[watcher.exp];
-        if(newVal !== oldVal){//更新了
-            watcher.fn(newVal, oldVal);
-            watcher.last = newVal;//更新老值，让老的值变成最新更改的值，方便下次更新
-        }
-    });
+    this.$digest();
 }
 let scope = new Scope();
 scope.name = '珠峰';
@@ -38,7 +45,7 @@ scope.$watch('name', function(newVal, oldVal){
 
 scope.$watch('age', function(newVal, oldVal){
     scope.name = '珠峰number one';
-    console.log(newVal, oldVal);
+    // console.log(newVal, oldVal);
 });
 scope.age = 10;
 // scope.name = '珠峰number one';
